@@ -1,0 +1,59 @@
+version: "3.9"
+
+services:
+  authservice:
+    build:
+      context: ./authservice
+    container_name: authservice
+    ports:
+      - "${AUTHSERVICE_PORT}:8000"
+    environment:
+      - DATABASE_URL=${AUTHSERVICE_DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+    depends_on:
+      - authdb
+
+  adminservice:
+    build:
+      context: ./adminservice
+    container_name: adminservice
+    ports:
+      - "${ADMINSERVICE_PORT}:${ADMINSERVICE_PORT}"
+    environment:
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL}
+      - DATABASE_URL=${ADMINSERVICE_DATABASE_URL}
+    depends_on:
+      - admindb
+      - authservice
+
+  authdb:
+    image: postgres:15
+    container_name: authdb
+    restart: always
+    ports:
+      - "${AUTHDB_PORT}:5432"  # Порт для подключения к базе данных authdb
+    environment:
+      POSTGRES_USER: ${AUTHDB_USER}
+      POSTGRES_PASSWORD: ${AUTHDB_PASSWORD}
+      POSTGRES_DB: ${AUTHDB_NAME}
+    volumes:
+      - authdb_data:/var/lib/postgresql/data
+
+  admindb:
+    image: postgres:15
+    container_name: admindb
+    restart: always
+    ports:
+      - "${ADMINDB_PORT}:5432"  # Порт для подключения к базе данных admindb
+    environment:
+      POSTGRES_USER: ${ADMINDB_USER}
+      POSTGRES_PASSWORD: ${ADMINDB_PASSWORD}
+      POSTGRES_DB: ${ADMINDB_NAME}
+    volumes:
+      - admindb_data:/var/lib/postgresql/data
+
+volumes:
+  authdb_data:
+  admindb_data:
