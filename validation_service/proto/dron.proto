@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package dron;
+
+service DronValidation {
+    rpc ValidateData (ValidationRequest) returns (ValidationResponse);
+}
+
+message ValidationRequest {
+    int32 dron_id = 1;
+    double temperature = 2;
+    double humidity = 3;
+    string timestamp = 4;
+    double latitude = 5;
+    double longitude = 6;
+    string token = 7;
+}
+
+message ValidationResponse {
+    bool is_valid = 1;
+    string message = 2;
+}

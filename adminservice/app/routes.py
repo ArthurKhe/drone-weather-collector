@@ -2,9 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from fastapi.security import OAuth2PasswordBearer
+from datetime import datetime
 from .dependencies import validate_token
 from .database import get_db
 from .models import Dron, DronData
+from .schemas import DronDataCreate
 
 router = APIRouter()
 
@@ -101,11 +103,43 @@ def get_dron_data(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, le=100),
 ):
-    query = db.query(DronData).filter(DronData.dron_id == id)
+    query = db.query(DronData).filter(DronData.dron_id == id).order_by(DronData.timestamp.desc())
     if start_date:
         query = query.filter(DronData.timestamp >= start_date)
     if end_date:
         query = query.filter(DronData.timestamp <= end_date)
     total = query.count()
     items = query.offset((page - 1) * page_size).limit(page_size).all()
-    return {"total": total, "items": items}
+    last_record = db.query(DronData).filter(DronData.dron_id == id).order_by(DronData.timestamp.desc()).first()
+
+    return {
+        "total": total,
+        "items": items,
+        "last_record": last_record
+    }
+
+
+@router.post("/dron/{dron_id}/data")
+def add_dron_data(
+    dron_id: int,
+    dron_data: DronDataCreate,
+    db: Session = Depends(get_db),
+):
+    # Проверяем, существует ли дрон с указанным id
+    dron = db.query(Dron).filter(Dron.id == dron_id).first()
+    if not dron:
+        raise HTTPException(status_code=404, detail="Dron not found")
+
+    # Добавляем данные для дрона
+    new_data = DronData(
+        dron_id=dron_id,
+        timestamp=dron_data.timestamp,
+        temperature=dron_data.temperature,
+        humidity=dron_data.humidity,
+        latitude=dron_data.latitude,
+        longitude=dron_data.longitude,
+    )
+    db.add(new_data)
+    db.commit()
+    db.refresh(new_data)
+    return {"message": "Data added successfully", "dron_data": new_data}

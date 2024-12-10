@@ -54,6 +54,35 @@ services:
     volumes:
       - admindb_data:/var/lib/postgresql/data
 
+
+  validationservice:
+    build:
+      context: ./validation_service
+      dockerfile: Dockerfile
+    container_name: validationservice
+    ports:
+      - "${VALIDATIONSERVICE_PORT}:${VALIDATIONSERVICE_PORT}"
+    environment:
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_QUEUE: ${RABBITMQ_QUEUE}
+      ADMINSERVICE_URL: ${ADMIN_SERVICE_URL}
+    depends_on:
+      - rabbitmq
+      - adminservice
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "${RABBITMQ_PORT}:${RABBITMQ_PORT}"
+      - "${RABBITMQ_MANAGEMENT_PORT}:${RABBITMQ_MANAGEMENT_PORT}"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
 volumes:
   authdb_data:
   admindb_data:
+  rabbitmq_data:
