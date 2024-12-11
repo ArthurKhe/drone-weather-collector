@@ -1,19 +1,21 @@
-from datetime import datetime
+
 import logging
 import requests
+from datetime import datetime
+from settings import settings
 logging.basicConfig(level=logging.INFO)
-TEMPERATURE_MIN = -50
-TEMPERATURE_MAX = 50
-HUMIDITY_MIN = 0
-HUMIDITY_MAX = 100
+
 
 
 def get_dron_from_admin_service(dron_id, token):
     try:
-        url = f"http://adminservice:8001/dron/{dron_id}?token={token}"
+        url = f"{settings.ADMIN_SERVICE_URL}/dron/{dron_id}"
         logging.info(f"send dron data URL: {url}")
         response = requests.get(
             url,
+            headers={
+                "token": token
+            }
         )
         dron_data = response.json()
         response.raise_for_status()
@@ -37,12 +39,7 @@ def validate_dron_data(data):
     dron = get_dron_from_admin_service(data['dron_id'], data['token'])
     if not dron:
         raise ValueError(f"Dron with id {data['dron_id']} not found")
-    if not (TEMPERATURE_MIN <= data["temperature"] <= TEMPERATURE_MAX):
+    if not (settings.TEMPERATURE_MIN <= data["temperature"] <= settings.TEMPERATURE_MAX):
         raise ValueError(f"Temperature out of range: {data['temperature']}")
-    if not (HUMIDITY_MIN <= data["humidity"] <= HUMIDITY_MAX):
+    if not (settings.HUMIDITY_MIN <= data["humidity"] <= settings.HUMIDITY_MAX):
         raise ValueError(f"Humidity out of range: {data['humidity']}")
-
-    if not (-90 <= data["latitude"] <= 90):
-        raise ValueError(f"Latitude out of range: {data['latitude']}")
-    if not (-180 <= data["longitude"] <= 180):
-        raise ValueError(f"Longitude out of range: {data['longitude']}")

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Header
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from fastapi.security import OAuth2PasswordBearer
@@ -15,11 +15,14 @@ router = APIRouter()
 @router.get("/dron")
 def get_drons(
     db: Session = Depends(get_db),
-    token: str = Depends(validate_token),
+    token: str = Header(..., description="Authorization token"),
     name: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, le=100),
 ):
+    # Валидация токена, если требуется
+    if not validate_token(token):  # Предполагается, что validate_token проверяет токен
+        raise HTTPException(status_code=401, detail="Invalid token")
     query = db.query(Dron)
     if name:
         query = query.filter(Dron.name.ilike(f"%{name}%"))
@@ -34,8 +37,11 @@ def create_dron(
     name: str,
     description: Optional[str] = None,
     db: Session = Depends(get_db),
-    token: str = Depends(validate_token),
+    token: str = Header(..., description="Authorization token"),
 ):
+    # Валидация токена, если требуется
+    if not validate_token(token):  # Предполагается, что validate_token проверяет токен
+        raise HTTPException(status_code=401, detail="Invalid token")
     dron = Dron(name=name, description=description)
     db.add(dron)
     db.commit()
@@ -48,8 +54,11 @@ def create_dron(
 def get_dron(
     id: int,
     db: Session = Depends(get_db),
-    token: str = Depends(validate_token),
+    token: str = Header(..., description="Authorization token"),
 ):
+    # Валидация токена, если требуется
+    if not validate_token(token):  # Предполагается, что validate_token проверяет токен
+        raise HTTPException(status_code=401, detail="Invalid token")
     dron = db.query(Dron).filter(Dron.id == id).first()
     if not dron:
         raise HTTPException(status_code=404, detail="Dron not found")
@@ -63,8 +72,11 @@ def update_dron(
     name: Optional[str] = None,
     description: Optional[str] = None,
     db: Session = Depends(get_db),
-    token: str = Depends(validate_token),
+    token: str = Header(..., description="Authorization token"),
 ):
+    # Валидация токена, если требуется
+    if not validate_token(token):  # Предполагается, что validate_token проверяет токен
+        raise HTTPException(status_code=401, detail="Invalid token")
     dron = db.query(Dron).filter(Dron.id == id).first()
     if not dron:
         raise HTTPException(status_code=404, detail="Dron not found")
@@ -82,8 +94,11 @@ def update_dron(
 def delete_dron(
     id: int,
     db: Session = Depends(get_db),
-    token: str = Depends(validate_token),
+    token: str = Header(..., description="Authorization token"),
 ):
+    # Валидация токена, если требуется
+    if not validate_token(token):  # Предполагается, что validate_token проверяет токен
+        raise HTTPException(status_code=401, detail="Invalid token")
     dron = db.query(Dron).filter(Dron.id == id).first()
     if not dron:
         raise HTTPException(status_code=404, detail="Dron not found")
@@ -97,12 +112,15 @@ def delete_dron(
 def get_dron_data(
     id: int = None,
     db: Session = Depends(get_db),
-    token: str = Depends(validate_token),
+    token: str = Header(..., description="Authorization token"),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, le=100),
 ):
+    # Валидация токена, если требуется
+    if not validate_token(token):  # Предполагается, что validate_token проверяет токен
+        raise HTTPException(status_code=401, detail="Invalid token")
     query = db.query(DronData).filter(DronData.dron_id == id).order_by(DronData.timestamp.desc())
     if start_date:
         query = query.filter(DronData.timestamp >= start_date)
@@ -124,7 +142,11 @@ def add_dron_data(
     dron_id: int,
     dron_data: DronDataCreate,
     db: Session = Depends(get_db),
+    token: str = Header(..., description="Authorization token"),
 ):
+    # Валидация токена, если требуется
+    if not validate_token(token):  # Предполагается, что validate_token проверяет токен
+        raise HTTPException(status_code=401, detail="Invalid token")
     # Проверяем, существует ли дрон с указанным id
     dron = db.query(Dron).filter(Dron.id == dron_id).first()
     if not dron:
