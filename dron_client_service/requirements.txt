@@ -1,2 +1,4 @@
 grpcio==1.68.0
 grpcio-tools==1.68.0
+requests==2.31.0
+python-dotenv
